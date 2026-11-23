@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wispr Flow — Flow Twin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:13px;
+  background:#f0efec;
+  color:#111;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ─── STEP NAV BAR ──────────────────────────────── */
+.step-bar{
+  background:#fff;
+  border-bottom:1px solid #e8e6e1;
+  padding:0 20px;
+  display:flex;
+  align-items:center;
+  gap:0;
+  height:42px;
+  flex-shrink:0;
+  overflow-x:auto;
+}
+.step-item{
+  display:flex;align-items:center;gap:7px;
+  padding:0 14px;height:100%;
+  font-size:11.5px;font-weight:500;
+  color:#9c9890;cursor:pointer;
+  border-bottom:2px solid transparent;
+  white-space:nowrap;transition:all .15s;
+  border:none;background:none;font-family:inherit;
+}
+.step-item:hover{color:#444;}
+.step-item.active{color:#111;border-bottom:2px solid #111;}
+.step-num{
+  width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;
+  background:#e8e6e1;color:#666;flex-shrink:0;
+}
+.step-item.active .step-num{background:#111;color:#fff;}
+.step-item.done .step-num{background:#1a7a6e;color:#fff;}
+.step-item.done{color:#555;}
+
+/* ─── APP SHELL ─────────────────────────────────── */
+.app{display:flex;flex:1;overflow:hidden;}
+
+/* ─── SIDEBAR ───────────────────────────────────── */
+.sidebar{
+  width:200px;flex-shrink:0;
+  background:#fff;
+  border-right:1px solid #e8e6e1;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  padding-bottom:16px;
+}
+.sb-logo{
+  display:flex;align-items:center;gap:8px;
+  padding:16px 16px 12px;
+  font-size:16px;font-weight:700;letter-spacing:-.3px;color:#111;
+}
+.sb-logo-icon{
+  width:28px;height:28px;background:#111;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+}
+.sb-logo-icon svg{width:15px;height:15px;}
+.sb-badge{
+  font-size:10px;font-weight:600;
+  padding:2px 7px;border-radius:4px;
+  background:rgba(108,92,231,.1);color:#6c5ce7;
+  border:1px solid rgba(108,92,231,.15);
+}
+.sb-nav{padding:4px 8px;flex:1;}
+.sb-item{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 10px;border-radius:8px;
+  font-size:13px;font-weight:400;color:#666;
+  cursor:pointer;transition:all .12s;
+  border:none;background:none;width:100%;text-align:left;font-family:inherit;
+}
+.sb-item:hover{background:#f5f4f0;color:#111;}
+.sb-item.active{background:#f0efec;color:#111;font-weight:500;}
+.sb-item svg{width:16px;height:16px;opacity:.6;flex-shrink:0;}
+.sb-item.active svg{opacity:1;}
+.sb-item.twin-item{color:#1a7a6e;font-weight:500;}
+.sb-item.twin-item svg{opacity:1;}
+.sb-item.twin-item:hover,.sb-item.twin-item.active{background:rgba(26,122,110,.07);}
+.sb-divider{height:1px;background:#e8e6e1;margin:6px 8px;}
+.sb-bottom{padding:10px;border-top:1px solid #e8e6e1;margin-top:auto;}
+.sb-upgrade{
+  background:#f5f4f0;border-radius:10px;padding:12px;margin-bottom:8px;
+}
+.sb-upgrade .u-title{font-size:12px;font-weight:600;margin-bottom:2px;}
+.sb-upgrade .u-days{font-size:11px;color:#888;margin-bottom:6px;}
+.sb-upgrade .u-desc{font-size:11px;color:#888;line-height:1.5;margin-bottom:8px;}
+.sb-upgrade-btn{
+  width:100%;padding:6px 10px;border-radius:7px;
+  border:1px solid #d8d6d1;background:#fff;
+  font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;
+  color:#111;transition:all .12s;
+}
+.sb-upgrade-btn:hover{background:#f0efec;}
+.sb-link{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:7px;
+  font-size:12px;color:#888;cursor:pointer;
+  transition:all .12s;border:none;background:none;
+  width:100%;text-align:left;font-family:inherit;
+}
+.sb-link:hover{background:#f5f4f0;color:#444;}
+.sb-link svg{width:15px;height:15px;flex-shrink:0;}
+
+/* ─── MAIN ───────────────────────────────────────── */
+.main{flex:1;overflow-y:auto;background:#f0efec;}
+
+/* ─── SCREENS ────────────────────────────────────── */
+.screen{display:none;padding:28px 28px;min-height:100%;}
+.screen.active{display:block;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── HOME SCREEN ────────────────────────────────── */
+.home-greeting{
+  font-size:20px;font-weight:700;letter-spacing:-.4px;
+  margin-bottom:20px;display:flex;align-items:center;gap:10px;
+}
+.fn-key{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:24px;background:#e8a22a;border-radius:5px;
+  font-size:12px;font-weight:700;color:#fff;
+}
+
+/* discovery banner */
+.discovery-banner{
+  background:linear-gradient(135deg,#0d2b26,#1a4a3f);
+  border-radius:14px;padding:20px 24px;
+  display:flex;align-items:center;gap:18px;
+  margin-bottom:16px;cursor:pointer;
+  border:1px solid rgba(26,122,110,.3);
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.discovery-banner::before{
+  content:'';position:absolute;right:-30px;top:-30px;
+  width:120px;height:120px;border-radius:50%;
+  background:rgba(255,255,255,.04);
+}
+.discovery-banner:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(26,122,110,.15);}
+.disc-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.disc-text{flex:1;}
+.disc-eyebrow{
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:#5ae8c0;margin-bottom:3px;
+}
+.disc-title{font-size:15px;font-weight:600;color:#fff;margin-bottom:3px;letter-spacing:-.2px;}
+.disc-sub{font-size:12px;color:rgba(255,255,255,.55);line-height:1.5;}
+.disc-cta{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:8px;padding:8px 14px;
+  font-size:12px;font-weight:500;color:rgba(255,255,255,.85);
+  white-space:nowrap;flex-shrink:0;
+}
+.signal-dots{display:flex;gap:3px;align-items:center;}
+.sdot{width:5px;height:5px;border-radius:50%;background:#5ae8c0;animation:sdpulse 1.8s ease-in-out infinite;}
+.sdot:nth-child(2){animation-delay:.3s;opacity:.6;}
+.sdot:nth-child(3){animation-delay:.6s;opacity:.3;}
+@keyframes sdpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+
+/* two col grid */
+.home-grid{display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:16px;}
+.hero-card{
+  border-radius:14px;overflow:hidden;position:relative;height:148px;
+  background:linear-gradient(135deg,#1a1a2e,#0f3460);
+}
+.hero-card-text{
+  position:relative;padding:20px 22px;height:100%;
+  display:flex;flex-direction:column;justify-content:flex-end;
+}
+.hero-card-text h3{
+  font-family:'Georgia',serif;font-size:18px;font-weight:400;
+  color:#fff;margin-bottom:4px;font-style:italic;
+}
+.hero-card-text p{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:12px;}
+.hero-btn{
+  display:inline-flex;padding:6px 14px;
+  background:#fff;border-radius:6px;
+  font-size:12px;font-weight:500;color:#111;
+  cursor:pointer;border:none;font-family:inherit;
+  width:fit-content;transition:all .12s;
+}
+.hero-btn:hover{background:#f0ede8;}
+.stats-card{
+  background:#fff;border-radius:14px;border:1px solid #e8e6e1;
+  padding:18px 20px;
+}
+.stat-big .num{font-size:36px;font-weight:700;letter-spacing:-1px;line-height:1;}
+.stat-big .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-top:3px;}
+.stat-row{display:flex;gap:20px;margin:14px 0;}
+.stat-sm .num{font-size:22px;font-weight:700;letter-spacing:-.5px;}
+.stat-sm .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.07em;}
+.challenge{border-top:1px solid #e8e6e1;padding-top:12px;}
+.ch-title{font-size:12px;font-weight:600;margin-bottom:2px;}
+.ch-sub{font-size:11px;color:#888;margin-bottom:8px;}
+.ch-bar{height:4px;background:#e8e6e1;border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.ch-fill{height:100%;background:#6c5ce7;border-radius:2px;width:44%;}
+.ch-count{font-size:10px;color:#888;text-align:right;}
+
+/* today log */
+.section-label{
+  font-size:10px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:#888;margin-bottom:10px;
+}
+.log-item{
+  background:#fff;border:1px solid #e8e6e1;border-radius:10px;
+  padding:11px 14px;display:flex;gap:14px;
+  margin-bottom:6px;cursor:pointer;transition:border-color .12s;
+}
+.log-item:hover{border-color:#ccc;}
+.log-time{font-size:11px;color:#888;width:58px;flex-shrink:0;padding-top:1px;}
+.log-text{font-size:13px;color:#333;line-height:1.5;}
+
+/* ─── CONSENT SCREEN ─────────────────────────────── */
+.consent-wrap{max-width:560px;margin:0 auto;}
+.consent-header{margin-bottom:28px;}
+.consent-header .pg-title{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;}
+.consent-header .pg-sub{font-size:13px;color:#666;line-height:1.6;font-weight:300;}
+
+.consent-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:16px;
+  overflow:hidden;margin-bottom:14px;
+}
+.consent-top{
+  background:linear-gradient(135deg,#0d2b26,#1a4a3f);
+  padding:22px 26px;display:flex;align-items:center;gap:16px;
+}
+.consent-top-icon{
+  width:48px;height:48px;border-radius:12px;
+  background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.consent-top-text h3{
+  font-size:17px;font-weight:600;color:#fff;margin-bottom:3px;letter-spacing:-.2px;
+}
+.consent-top-text p{font-size:12px;color:rgba(255,255,255,.6);line-height:1.5;}
+
+.consent-body{padding:22px 26px;}
+.consent-row{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:12px 0;border-bottom:1px solid #f0efec;
+}
+.consent-row:last-child{border-bottom:none;}
+.consent-icon{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;margin-top:1px;
+}
+.ci-green{background:rgba(26,122,110,.08);}
+.ci-orange{background:rgba(232,130,90,.08);}
+.ci-blue{background:rgba(108,92,231,.08);}
+.ci-red{background:rgba(200,80,42,.08);}
+.consent-text strong{display:block;font-size:13px;font-weight:600;margin-bottom:3px;}
+.consent-text p{font-size:12px;color:#666;line-height:1.5;margin:0;}
+
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#f5f4f0;border-radius:10px;padding:14px 16px;
+  margin-top:16px;
+}
+.toggle-label strong{display:block;font-size:13px;font-weight:600;margin-bottom:2px;}
+.toggle-label span{font-size:11px;color:#888;}
+.tog{
+  width:40px;height:24px;border-radius:12px;
+  background:#d8d6d1;position:relative;
+  cursor:pointer;border:none;transition:background .2s;flex-shrink:0;
+}
+.tog.on{background:#1a7a6e;}
+.tog::after{
+  content:'';position:absolute;
+  width:18px;height:18px;background:#fff;border-radius:50%;
+  top:3px;left:3px;transition:transform .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.tog.on::after{transform:translateX(16px);}
+
+.consent-notice{
+  background:#fffbf0;border:1px solid rgba(232,162,42,.2);
+  border-radius:10px;padding:12px 14px;margin-top:12px;
+  font-size:11.5px;color:#7a5a3a;line-height:1.5;
+  display:flex;gap:8px;align-items:flex-start;
+}
+
+.consent-btn{
+  width:100%;padding:13px;border-radius:10px;
+  border:none;background:#111;color:#fff;
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:all .15s;letter-spacing:-.2px;margin-top:14px;
+}
+.consent-btn:hover{background:#333;}
+.consent-btn.disabled{background:#ccc;cursor:default;}
+
+/* ─── TRAINING SCREEN ────────────────────────────── */
+.training-wrap{max-width:600px;margin:0 auto;}
+
+.training-status{
+  background:#fff;border:1px solid #e8e6e1;border-radius:16px;
+  overflow:hidden;margin-bottom:14px;
+}
+.training-top{
+  background:linear-gradient(135deg,#0d2b26,#1a4a3f);
+  padding:24px 28px;display:flex;align-items:center;gap:20px;
+}
+.training-ring{width:72px;height:72px;position:relative;flex-shrink:0;}
+.training-ring svg{transform:rotate(-90deg);}
+.training-pct{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;color:#fff;
+}
+.training-top-text h3{
+  font-size:18px;font-weight:600;color:#fff;
+  margin-bottom:4px;letter-spacing:-.3px;
+}
+.training-top-text p{font-size:12px;color:rgba(255,255,255,.6);line-height:1.5;}
+.training-body{padding:22px 28px;}
+
+.sig-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sig-row:last-child{margin-bottom:0;}
+.sig-label{font-size:12px;color:#555;width:130px;flex-shrink:0;}
+.sig-bar-wrap{flex:1;height:4px;background:#e8e6e1;border-radius:2px;overflow:hidden;}
+.sig-bar{height:100%;background:#1a7a6e;border-radius:2px;transition:width 1s ease;}
+.sig-count{font-size:11px;color:#888;width:56px;text-align:right;}
+
+.training-note{
+  background:#f5f4f0;border-radius:10px;padding:12px 14px;
+  margin-top:16px;display:flex;gap:10px;align-items:flex-start;
+}
+.training-note p{font-size:12px;color:#666;line-height:1.5;margin:0;}
+
+.data-sources{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;
+}
+.ds-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:12px;
+  padding:14px 16px;display:flex;align-items:center;gap:10px;
+}
+.ds-icon{font-size:18px;flex-shrink:0;}
+.ds-label{font-size:13px;font-weight:500;}
+.ds-count{font-size:11px;color:#888;}
+.ds-bar{flex:1;height:3px;background:#e8e6e1;border-radius:2px;overflow:hidden;}
+.ds-fill{height:100%;background:#1a7a6e;border-radius:2px;}
+
+/* ─── RECOGNITION SCREEN ─────────────────────────── */
+.recog-wrap{max-width:580px;margin:0 auto;}
+.recog-header{margin-bottom:24px;}
+.recog-header .pg-title{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;}
+.recog-header .pg-sub{font-size:13px;color:#666;line-height:1.6;font-weight:300;}
+
+.recog-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:14px;
+  padding:20px 22px;margin-bottom:10px;
+}
+.recog-q{
+  font-size:13px;font-weight:600;color:#111;margin-bottom:10px;
+  display:flex;align-items:flex-start;gap:8px;
+}
+.q-tag{
+  font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;background:#f0efec;color:#888;
+  flex-shrink:0;margin-top:2px;
+}
+.recog-a{
+  background:#f5f4f0;border-radius:8px;padding:12px 14px;
+  font-size:13px;color:#333;line-height:1.65;
+  border-left:2px solid #1a7a6e;margin-bottom:12px;
+  font-style:italic;
+}
+.recog-actions{display:flex;gap:7px;}
+.ra-btn{
+  padding:6px 14px;border-radius:6px;
+  font-size:12px;font-weight:500;cursor:pointer;
+  font-family:inherit;border:1px solid #d8d6d1;
+  background:none;color:#555;transition:all .12s;
+}
+.ra-btn:hover{border-color:#aaa;color:#111;}
+.ra-btn.yes{border-color:rgba(26,122,110,.3);color:#1a7a6e;background:rgba(26,122,110,.06);}
+.ra-btn.yes:hover{background:rgba(26,122,110,.12);}
+.ra-btn.no{border-color:rgba(200,80,42,.25);color:#c8502a;}
+.ra-btn.no:hover{background:rgba(200,80,42,.06);}
+
+.recog-score{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border:1px solid #e8e6e1;border-radius:14px;
+  padding:16px 20px;margin-bottom:14px;
+}
+.rs-label{font-size:13px;font-weight:500;}
+.rs-sub{font-size:11px;color:#888;margin-top:2px;}
+.rs-pct{font-size:28px;font-weight:700;letter-spacing:-1px;color:#1a7a6e;}
+
+.proceed-btn{
+  width:100%;padding:13px;border-radius:10px;
+  border:none;background:#1a7a6e;color:#fff;
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:all .15s;
+}
+.proceed-btn:hover{background:#156058;}
+
+/* ─── SCOPE SCREEN ───────────────────────────────── */
+.scope-wrap{max-width:620px;margin:0 auto;}
+.scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.scope-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:12px;
+  padding:16px;
+}
+.scope-card h4{
+  font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:#888;margin-bottom:10px;
+}
+.chip-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{
+  padding:4px 11px;border-radius:20px;font-size:11.5px;
+  border:1px solid #d8d6d1;color:#555;
+  cursor:pointer;transition:all .12s;background:none;font-family:inherit;
+}
+.chip:hover{border-color:#aaa;color:#111;}
+.chip.on{background:rgba(26,122,110,.08);border-color:rgba(26,122,110,.3);color:#1a7a6e;}
+.chip.red-chip.on{background:rgba(200,80,42,.07);border-color:rgba(200,80,42,.25);color:#c8502a;}
+
+.escalation-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:12px;
+  padding:16px;margin-bottom:12px;
+}
+.escalation-card h4{
+  font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:#888;margin-bottom:10px;
+}
+.esc-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid #f0efec;
+}
+.esc-row:last-child{border-bottom:none;}
+.esc-label{font-size:12.5px;color:#333;font-weight:500;}
+.esc-sub{font-size:11px;color:#888;margin-top:1px;}
+.esc-msg{
+  background:#f5f4f0;border-radius:8px;padding:10px 12px;
+  font-size:12px;color:#555;line-height:1.55;margin-top:10px;
+  font-style:italic;border-left:2px solid #d8d6d1;
+}
+
+/* ─── DEPLOY SCREEN ──────────────────────────────── */
+.deploy-wrap{
+  display:grid;grid-template-columns:1fr 300px;gap:14px;
+  max-width:860px;
+}
+.deploy-main{}
+.deploy-preview{}
+
+.deploy-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:14px;
+  padding:20px 22px;margin-bottom:12px;
+}
+.deploy-card h4{
+  font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:#888;margin-bottom:12px;display:flex;align-items:center;gap:6px;
+}
+.deploy-card h4 .dot{width:6px;height:6px;border-radius:50%;background:#1a7a6e;}
+
+.link-row{
+  display:flex;align-items:center;background:#f5f4f0;
+  border:1px solid #e8e6e1;border-radius:8px;overflow:hidden;margin-bottom:10px;
+}
+.link-val{flex:1;padding:9px 12px;font-size:12.5px;color:#1a7a6e;font-family:'JetBrains Mono',monospace;}
+.copy-btn{
+  padding:9px 14px;font-size:11px;font-weight:600;
+  background:#e8e6e1;border:none;border-left:1px solid #d8d6d1;
+  cursor:pointer;font-family:inherit;color:#444;transition:all .12s;
+}
+.copy-btn:hover{background:#d8d6d1;}
+
+.share-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.share-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:20px;font-size:11.5px;
+  border:1px solid #d8d6d1;color:#555;
+  cursor:pointer;transition:all .12s;background:none;font-family:inherit;
+}
+.share-chip:hover{border-color:#aaa;color:#111;}
+.share-chip.wa{border-color:rgba(37,211,102,.35);color:#128c7e;}
+.share-chip.wa:hover{background:rgba(37,211,102,.06);}
+
+/* WA preview */
+.wa-preview{
+  background:#0b141a;border-radius:14px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);
+}
+.wa-prev-header{
+  background:#202c33;padding:10px 14px;
+  display:flex;align-items:center;gap:9px;
+}
+.wa-av{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#1a7a6e,#6c5ce7);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:#fff;flex-shrink:0;
+}
+.wa-name{font-size:13px;font-weight:500;color:#e9edef;}
+.wa-status{font-size:10.5px;color:#00a884;display:flex;align-items:center;gap:4px;}
+.wa-status-dot{width:5px;height:5px;border-radius:50%;background:#00a884;}
+.wa-body{
+  padding:14px 12px;
+  background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23182229' fill-opacity='0.5'%3E%3Cpath d='M20 20h2v2h-2z'/%3E%3C/g%3E%3C/svg%3E");
+  display:flex;flex-direction:column;gap:8px;
+}
+.wa-bubble{
+  padding:8px 10px;border-radius:8px;
+  font-size:12px;line-height:1.55;max-width:86%;
+}
+.wa-bubble.in{
+  background:#202c33;color:#e9edef;
+  border-top-left-radius:2px;align-self:flex-start;
+}
+.wa-bubble.out{
+  background:#005c4b;color:#e9edef;
+  border-top-right-radius:2px;align-self:flex-end;
+}
+.wa-bubble-tag{
+  font-size:9px;color:rgba(255,255,255,.3);
+  margin-top:4px;padding-top:4px;
+  border-top:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;gap:3px;
+}
+.wa-tag-dot{width:4px;height:4px;border-radius:50%;background:#00a884;flex-shrink:0;}
+.wa-time{font-size:10px;color:rgba(255,255,255,.3);text-align:right;margin-top:2px;}
+
+.go-live-btn{
+  width:100%;padding:13px;border-radius:10px;
+  border:none;background:#1a7a6e;color:#fff;
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:all .15s;margin-top:12px;
+}
+.go-live-btn:hover{background:#156058;}
+
+/* ─── TRIAGE SCREEN ──────────────────────────────── */
+.triage-wrap{}
+.triage-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;
+}
+.tstat{
+  background:#fff;border:1px solid #e8e6e1;border-radius:12px;
+  padding:16px 18px;
+}
+.tstat .n{font-size:28px;font-weight:700;letter-spacing:-1px;}
+.tstat .n.teal{color:#1a7a6e;}
+.tstat .n.orange{color:#c8502a;}
+.tstat .l{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+
+.triage-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.inbox-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:14px;
+  padding:18px 20px;
+}
+.inbox-card h4{
+  font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:#888;margin-bottom:14px;
+}
+.inbox-item{
+  border:1px solid #e8e6e1;border-radius:10px;
+  padding:12px 14px;margin-bottom:8px;
+}
+.inbox-item:last-child{margin-bottom:0;}
+.inbox-from{font-size:11px;color:#888;margin-bottom:3px;}
+.inbox-q{font-size:13px;font-weight:500;color:#111;margin-bottom:8px;}
+.inbox-draft{
+  background:#f5f4f0;border-radius:6px;padding:8px 10px;
+  font-size:11.5px;color:#555;line-height:1.55;
+  margin-bottom:8px;font-style:italic;
+  border-left:2px solid #d8d6d1;
+}
+.inbox-btns{display:flex;gap:6px;}
+.ib{
+  padding:4px 11px;border-radius:5px;font-size:11px;font-weight:500;
+  cursor:pointer;font-family:inherit;border:1px solid #d8d6d1;
+  background:none;color:#666;transition:all .12s;
+}
+.ib:hover{color:#111;}
+.ib.approve{
+  border-color:rgba(26,122,110,.3);color:#1a7a6e;background:rgba(26,122,110,.06);
+}
+.ib.approve:hover{background:rgba(26,122,110,.12);}
+
+.digest-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:14px;
+  padding:18px 20px;
+}
+.digest-card h4{
+  font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:#888;margin-bottom:14px;
+}
+.digest-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:8px 0;border-bottom:1px solid #f0efec;
+}
+.digest-row:last-child{border-bottom:none;}
+.d-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#1a7a6e;margin-top:5px;flex-shrink:0;
+}
+.d-dot.orange{background:#c8502a;}
+.d-dot.gray{background:#ccc;}
+.d-text{font-size:12px;color:#444;flex:1;line-height:1.5;}
+.d-text strong{color:#111;font-weight:500;}
+.d-time{font-size:10px;color:#bbb;flex-shrink:0;margin-top:2px;}
+
+.pattern-card{
+  background:#fff;border:1px solid #e8e6e1;border-radius:14px;
+  padding:18px 20px;margin-top:12px;
+}
+.pattern-card h4{
+  font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:#888;margin-bottom:14px;
+}
+.p-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.p-row:last-child{margin-bottom:0;}
+.p-topic{font-size:12.5px;color:#333;width:160px;flex-shrink:0;}
+.p-bar-wrap{flex:1;height:5px;background:#e8e6e1;border-radius:3px;overflow:hidden;}
+.p-bar{height:100%;background:#1a7a6e;border-radius:3px;}
+.p-count{font-size:11px;color:#888;width:50px;text-align:right;}
+.p-tip{
+  font-size:10px;color:#888;
+  background:rgba(200,80,42,.06);
+  border:1px solid rgba(200,80,42,.15);
+  border-radius:5px;padding:2px 8px;
+  color:#c8502a;flex-shrink:0;
+}
+</style>
+</head>
+<body>
+
+<!-- STEP BAR -->
+<div class="step-bar">
+  <button class="step-item active" onclick="goTo(0)" id="s0">
+    <div class="step-num">1</div>Discovery
+  </button>
+  <button class="step-item" onclick="goTo(1)" id="s1">
+    <div class="step-num">2</div>Opt-in
+  </button>
+  <button class="step-item" onclick="goTo(2)" id="s2">
+    <div class="step-num">3</div>Training
+  </button>
+  <button class="step-item" onclick="goTo(3)" id="s3">
+    <div class="step-num">4</div>Recognition
+  </button>
+  <button class="step-item" onclick="goTo(4)" id="s4">
+    <div class="step-num">5</div>Scope & Guardrails
+  </button>
+  <button class="step-item" onclick="goTo(5)" id="s5">
+    <div class="step-num">6</div>Deploy via WhatsApp
+  </button>
+  <button class="step-item" onclick="goTo(6)" id="s6">
+    <div class="step-num">7</div>Live Triage
+  </button>
+</div>
+
+<!-- APP SHELL -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">
+        <svg viewBox="0 0 15 15" fill="none">
+          <rect x="1" y="4" width="3" height="7" rx="1" fill="white"/>
+          <rect x="6" y="2" width="3" height="11" rx="1" fill="white"/>
+          <rect x="11" y="5" width="3" height="5" rx="1" fill="white"/>
+        </svg>
+      </div>
+      Flow
+      <span class="sb-badge">Pro Trial</span>
+    </div>
+    <div class="sb-nav">
+      <button class="sb-item active" onclick="goTo(0)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+        Home
+      </button>
+      <button class="sb-item" onclick="goTo(0)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1 4 5 8 1 12"/><line x1="6" y1="12" x2="15" y2="12"/><line x1="6" y1="8" x2="11" y2="8"/><line x1="6" y1="4" x2="13" y2="4"/></svg>
+        Insights
+      </button>
+      <button class="sb-item" onclick="goTo(0)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
+        Dictionary
+      </button>
+      <button class="sb-item" onclick="goTo(0)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><line x1="11" y1="11" x2="14" y2="14"/></svg>
+        Snippets
+      </button>
+      <button class="sb-item" onclick="goTo(0)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s1-1 4-1 5 2 8 2V4s-3-2-6-2-6 2-6 2v8z"/></svg>
+        Style
+      </button>
+      <button class="sb-item" onclick="goTo(0)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4 6 2 8 4 10"/><polyline points="12 6 14 8 12 10"/><line x1="9" y1="4" x2="7" y2="12"/></svg>
+        Transforms
+      </button>
+      <button class="sb-item" onclick="goTo(0)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="8" y1="5" x2="8" y2="11"/></svg>
+        Scratchpad
+      </button>
+      <div class="sb-divider"></div>
+      <button class="sb-item twin-item" onclick="goTo(1)" id="twin-nav">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><circle cx="11" cy="5" r="2"/><path d="M1 13c0-2.761 2.239-4 5-4"/><path d="M10 9c2.5 0 5 1 5 4"/></svg>
+        Flow Twin
+      </button>
+    </div>
+    <div class="sb-bottom">
+      <div class="sb-upgrade">
+        <div class="u-title">Flow Pro Trial 🪄</div>
+        <div class="u-days">0 of 30 days used</div>
+        <div class="u-desc">Upgrade to Flow Pro to keep unlimited words and Pro features</div>
+        <button class="sb-upgrade-btn">Upgrade to Pro</button>
+      </div>
+      <button class="sb-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5"/></svg>
+        Invite your team
+      </button>
+      <button class="sb-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><polyline points="1 6 8 10 15 6"/></svg>
+        Get a free month
+      </button>
+      <button class="sb-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r=".5" fill="currentColor"/></svg>
+        Help
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ── SCREEN 0: HOME (Discovery) ── -->
+    <div class="screen active" id="screen-0">
+      <div class="home-greeting">
+        Hey Snigdha, get back into the flow with <span class="fn-key">fn</span>
+      </div>
+
+      <!-- Discovery Banner -->
+      <div class="discovery-banner" onclick="goTo(1)">
+        <div class="disc-icon">🧠</div>
+        <div class="disc-text">
+          <div class="disc-eyebrow">New · Flow Twin</div>
+          <div class="disc-title">Your voice has been working. Want to put it to work for others?</div>
+          <div class="disc-sub">14 days of usage · 1,240 messages captured · Your professional twin is within reach.</div>
+        </div>
+        <div class="disc-cta">
+          <div class="signal-dots"><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div></div>
+          See how →
+        </div>
+      </div>
+
+      <div class="home-grid">
+        <div class="hero-card">
+          <div class="hero-card-text">
+            <h3>Try Flow in another app</h3>
+            <p>Flow works anywhere you type.</p>
+            <button class="hero-btn">Get started</button>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-big"><div class="num">44</div><div class="lbl">Total words</div></div>
+          <div class="stat-row">
+            <div class="stat-sm"><div class="num">146</div><div class="lbl">WPM</div></div>
+            <div class="stat-sm"><div class="num">1</div><div class="lbl">Day</div></div>
+          </div>
+          <div class="challenge">
+            <div class="ch-title">100 Words a Day Challenge</div>
+            <div class="ch-sub">Earn an extra day of Pro</div>
+            <div class="ch-bar"><div class="ch-fill"></div></div>
+            <div class="ch-count">44/100 words</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Today</div>
+      <div class="log-item"><div class="log-time">10:18 PM</div><div class="log-text">I wanted to pick up a few things from the store: Bread, Potato chips, Ice cream</div></div>
+      <div class="log-item"><div class="log-time">10:17 PM</div><div class="log-text">Hi Greg, Let's connect soon. Are you available on Friday at 4? Best, Snigdha</div></div>
+      <div class="log-item"><div class="log-time">10:17 PM</div><div class="log-text">Hi Tobias, it's working fine for me. How about you?</div></div>
+    </div>
+
+    <!-- ── SCREEN 1: OPT-IN (Consent) ── -->
+    <div class="screen" id="screen-1">
+      <div class="consent-wrap">
+        <div class="consent-header">
+          <div class="pg-title">Train your Flow Twin</div>
+          <div class="pg-sub">Flow Twin uses your dictation data to build a professional AI twin — deployed via WhatsApp. You own it entirely. This is separate from all other privacy settings.</div>
+        </div>
+
+        <div class="consent-card">
+          <div class="consent-top">
+            <div class="consent-top-icon">🧠</div>
+            <div class="consent-top-text">
+              <h3>What you're opting into</h3>
+              <p>Read this carefully. This is a meaningful decision — not a checkbox.</p>
+            </div>
+          </div>
+          <div class="consent-body">
+            <div class="consent-row">
+              <div class="consent-icon ci-green">📝</div>
+              <div class="consent-text">
+                <strong>What data is used</strong>
+                <p>Your dictated transcripts — not audio. The text of your emails, notes, and messages captured via Flow. We build a language profile: vocabulary, tone, how you reason and respond.</p>
+              </div>
+            </div>
+            <div class="consent-row">
+              <div class="consent-icon ci-blue">🏗️</div>
+              <div class="consent-text">
+                <strong>What it builds</strong>
+                <p>A professional twin, scoped to what you choose. It handles repetitive inbound in your voice, so you focus only on what genuinely needs you.</p>
+              </div>
+            </div>
+            <div class="consent-row">
+              <div class="consent-icon ci-orange">🔑</div>
+              <div class="consent-text">
+                <strong>Who controls it</strong>
+                <p>You, entirely. Pause or delete your twin and all underlying data at any time — instantly, with no recovery period. Wispr gets nothing from your twin's data.</p>
+              </div>
+            </div>
+            <div class="consent-row">
+              <div class="consent-icon ci-red">🚫</div>
+              <div class="consent-text">
+                <strong>What this is not</strong>
+                <p>This data is not used to train Wispr's models. This is a third privacy state — separate from Default Mode and Privacy Mode. Your twin's data is yours alone.</p>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <strong>Train my Flow Twin</strong>
+                <span>I've read the above and want to proceed</span>
+              </div>
+              <button class="tog" id="consent-tog" onclick="toggleConsent()"></button>
+            </div>
+
+            <div class="consent-notice">
+              ⚠️ Your existing Privacy Mode setting is unchanged. This is an additional opt-in. You can withdraw consent and delete all twin data at any time from Settings → Flow Twin → Delete my twin.
+            </div>
+          </div>
+        </div>
+
+        <button class="consent-btn disabled" id="consent-btn" onclick="goTo(2)">
+          Start building my Flow Twin →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 2: TRAINING ── -->
+    <div class="screen" id="screen-2">
+      <div class="training-wrap">
+        <div class="training-status">
+          <div class="training-top">
+            <div class="training-ring">
+              <svg width="72" height="72" viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#1a7a6e" stroke-width="7" stroke-dasharray="176" stroke-dashoffset="58" stroke-linecap="round"/>
+              </svg>
+              <div class="training-pct">67%</div>
+            </div>
+            <div class="training-top-text">
+              <h3>Building your language profile</h3>
+              <p>Flow is learning how you communicate — vocabulary, tone, reasoning patterns. Keep using Flow normally. Nothing changes for you.</p>
+            </div>
+          </div>
+          <div class="training-body">
+            <div class="section-label" style="margin-bottom:12px;">Signal captured so far</div>
+            <div class="sig-row">
+              <div class="sig-label">Email replies</div>
+              <div class="sig-bar-wrap"><div class="sig-bar" style="width:82%"></div></div>
+              <div class="sig-count">614 msgs</div>
+            </div>
+            <div class="sig-row">
+              <div class="sig-label">Slack / DMs</div>
+              <div class="sig-bar-wrap"><div class="sig-bar" style="width:61%"></div></div>
+              <div class="sig-count">320 msgs</div>
+            </div>
+            <div class="sig-row">
+              <div class="sig-label">Documents</div>
+              <div class="sig-bar-wrap"><div class="sig-bar" style="width:38%"></div></div>
+              <div class="sig-count">87 docs</div>
+            </div>
+            <div class="sig-row">
+              <div class="sig-label">Voice notes</div>
+              <div class="sig-bar-wrap"><div class="sig-bar" style="width:24%"></div></div>
+              <div class="sig-count">44 notes</div>
+            </div>
+            <div class="training-note">
+              <span>⏳</span>
+              <p>Your twin will be ready to preview when the confidence threshold is met — typically 2–4 weeks of regular Flow usage. We'll notify you. You don't need to do anything.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label">What's being learned</div>
+        <div class="data-sources">
+          <div class="ds-card">
+            <div class="ds-icon">💬</div>
+            <div style="flex:1">
+              <div class="ds-label">Vocabulary</div>
+              <div class="ds-count">Your characteristic words and phrases</div>
+            </div>
+          </div>
+          <div class="ds-card">
+            <div class="ds-icon">🎯</div>
+            <div style="flex:1">
+              <div class="ds-label">Reasoning style</div>
+              <div class="ds-count">How you structure arguments</div>
+            </div>
+          </div>
+          <div class="ds-card">
+            <div class="ds-icon">🌡️</div>
+            <div style="flex:1">
+              <div class="ds-label">Tone register</div>
+              <div class="ds-count">Formal vs casual across contexts</div>
+            </div>
+          </div>
+          <div class="ds-card">
+            <div class="ds-icon">🔁</div>
+            <div style="flex:1">
+              <div class="ds-label">Response patterns</div>
+              <div class="ds-count">How you handle repeat questions</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="proceed-btn" onclick="goTo(3)" style="background:#111;">
+          Preview early (beta) →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 3: RECOGNITION ── -->
+    <div class="screen" id="screen-3">
+      <div class="recog-wrap">
+        <div class="recog-header">
+          <div class="pg-title">Does this sound like you?</div>
+          <div class="pg-sub">Your Flow Twin has generated responses to questions people typically ask you. Read them. If they sound right, great. If not — tell us, and we'll keep training.</div>
+        </div>
+
+        <div class="recog-score">
+          <div>
+            <div class="rs-label">Twin confidence score</div>
+            <div class="rs-sub">Based on 1,240 training signals</div>
+          </div>
+          <div class="rs-pct">84%</div>
+        </div>
+
+        <div class="recog-card">
+          <div class="recog-q"><span class="q-tag">Sample Q</span> What kind of consulting work do you take on?</div>
+          <div class="recog-a">"I work on 2–3 strategy and design engagements per quarter — mostly 0→1 stage, when there's real ambiguity about what to build and for whom. I'm particularly interested in AI-native products. What are you working on?"</div>
+          <div class="recog-actions">
+            <button class="ra-btn yes" onclick="markYes(this)">✓ Sounds like me</button>
+            <button class="ra-btn no" onclick="markNo(this)">✗ Not quite</button>
+            <button class="ra-btn">Edit response</button>
+          </div>
+        </div>
+
+        <div class="recog-card">
+          <div class="recog-q"><span class="q-tag">Sample Q</span> Are you available for freelance work right now?</div>
+          <div class="recog-a">"Right now I have capacity for one more project starting next month — I work in focused 6–8 week sprints. If the timing and the problem are right, email me at hello@snigdhajain.com with a brief."</div>
+          <div class="recog-actions">
+            <button class="ra-btn yes" onclick="markYes(this)">✓ Sounds like me</button>
+            <button class="ra-btn no" onclick="markNo(this)">✗ Not quite</button>
+            <button class="ra-btn">Edit response</button>
+          </div>
+        </div>
+
+        <div class="recog-card">
+          <div class="recog-q"><span class="q-tag">Sample Q</span> What's your approach to designing AI products?</div>
+          <div class="recog-a">"Traditional UX patterns break down when output is probabilistic. My focus is designing for the relationship between the user and the model — not just the interface. What specific problem are you hitting?"</div>
+          <div class="recog-actions">
+            <button class="ra-btn yes" onclick="markYes(this)">✓ Sounds like me</button>
+            <button class="ra-btn no" onclick="markNo(this)">✗ Not quite</button>
+            <button class="ra-btn">Edit response</button>
+          </div>
+        </div>
+
+        <div class="recog-card">
+          <div class="recog-q"><span class="q-tag">Sample Q</span> How do I reach you directly?</div>
+          <div class="recog-a">"Best way is hello@snigdhajain.com — I check on weekdays and usually get back within 48 hours. For anything urgent, mention that in the subject line."</div>
+          <div class="recog-actions">
+            <button class="ra-btn yes" onclick="markYes(this)">✓ Sounds like me</button>
+            <button class="ra-btn no" onclick="markNo(this)">✗ Not quite</button>
+            <button class="ra-btn">Edit response</button>
+          </div>
+        </div>
+
+        <button class="proceed-btn" onclick="goTo(4)">
+          Looks good — set my scope →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 4: SCOPE ── -->
+    <div class="screen" id="screen-4">
+      <div class="scope-wrap">
+        <div class="recog-header">
+          <div class="pg-title">Set your scope and guardrails</div>
+          <div class="pg-sub">Define what your twin handles, what it escalates, and what it never touches. The twin doesn't try to answer everything — it knows when to hand off to you.</div>
+        </div>
+
+        <div class="scope-grid">
+          <div class="scope-card">
+            <h4>✅ Twin can answer</h4>
+            <div class="chip-wrap">
+              <button class="chip on">Consulting scope</button>
+              <button class="chip on">Design process</button>
+              <button class="chip on">Availability</button>
+              <button class="chip on">Portfolio work</button>
+              <button class="chip on">Speaking events</button>
+              <button class="chip on">Resource recs</button>
+              <button class="chip" onclick="this.classList.toggle('on')">Case studies</button>
+              <button class="chip" onclick="this.classList.toggle('on')">+ Add topic</button>
+            </div>
+          </div>
+          <div class="scope-card">
+            <h4>🚫 Always escalate to me</h4>
+            <div class="chip-wrap">
+              <button class="chip red-chip on">Pricing / rates</button>
+              <button class="chip red-chip on">Contract terms</button>
+              <button class="chip red-chip on">Ready to hire</button>
+              <button class="chip red-chip on">Personal topics</button>
+              <button class="chip red-chip on">Novel situations</button>
+              <button class="chip red-chip" onclick="this.classList.toggle('on')">+ Add topic</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="escalation-card">
+          <h4>Escalation behaviour</h4>
+          <div class="esc-row">
+            <div>
+              <div class="esc-label">When to hand off</div>
+              <div class="esc-sub">Twin parks the query — doesn't guess</div>
+            </div>
+            <button class="tog on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="esc-row">
+            <div>
+              <div class="esc-label">Notify me immediately for high-priority</div>
+              <div class="esc-sub">Ready-to-hire signals trigger a push notification</div>
+            </div>
+            <button class="tog on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="esc-row">
+            <div>
+              <div class="esc-label">Weekly digest for everything else</div>
+              <div class="esc-sub">Low-urgency escalations batched Sunday evening</div>
+            </div>
+            <button class="tog on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="esc-msg">
+            Escalation message: "This one needs Snigdha directly — she checks her email on weekdays and replies within 48h. hello@snigdhajain.com"
+          </div>
+        </div>
+
+        <button class="proceed-btn" onclick="goTo(5)">
+          Deploy via WhatsApp →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 5: DEPLOY ── -->
+    <div class="screen" id="screen-5">
+      <div class="deploy-wrap">
+        <div class="deploy-main">
+          <div class="recog-header" style="margin-bottom:20px">
+            <div class="pg-title">Deploy your Flow Twin</div>
+            <div class="pg-sub">Your twin is live. Share the link — anyone who taps it opens a WhatsApp conversation with your twin instantly. No app download. No friction.</div>
+          </div>
+
+          <div class="deploy-card">
+            <h4><div class="dot"></div>Your twin link</h4>
+            <div class="link-row">
+              <div class="link-val">wisprflow.ai/snigdha/twin</div>
+              <button class="copy-btn" onclick="this.textContent='Copied ✓'">Copy</button>
+            </div>
+            <div class="share-chips">
+              <button class="share-chip wa">📱 WhatsApp status</button>
+              <button class="share-chip">✉️ Email signature</button>
+              <button class="share-chip">💼 LinkedIn bio</button>
+              <button class="share-chip">📸 Instagram bio</button>
+            </div>
+          </div>
+
+          <div class="deploy-card">
+            <h4><div class="dot"></div>Why WhatsApp — not a new app</h4>
+            <div style="font-size:13px;color:#555;line-height:1.7;">
+              <p style="margin-bottom:10px;">A share link that opens in WhatsApp has <strong style="color:#111;">zero friction</strong>. An app download requires intent, trust, storage, and a return visit. In India, WhatsApp is already where professional conversations happen — vendor follow-ups, client queries, business introductions.</p>
+              <p>Your twin shows up inside an existing conversation thread. Every response footer reads <strong style="color:#111;">"Snigdha's Flow Twin · Wispr Flow"</strong> — a live demonstration of the product inside a real interaction. Distribution is built into the utility.</p>
+            </div>
+          </div>
+
+          <button class="go-live-btn" onclick="goTo(6)">Go to live dashboard →</button>
+        </div>
+
+        <div class="deploy-preview">
+          <div class="section-label" style="margin-bottom:10px;">Live preview</div>
+          <div class="wa-preview">
+            <div class="wa-prev-header">
+              <div class="wa-av">S</div>
+              <div>
+                <div class="wa-name">Snigdha's Flow Twin 🤖</div>
+                <div class="wa-status"><div class="wa-status-dot"></div>Online · AI twin of Snigdha Jain</div>
+              </div>
+            </div>
+            <div class="wa-body">
+              <div class="wa-bubble in">Hi! Snigdha ka number LinkedIn se mila. Kya unse AI design pe baat ho sakti hai?</div>
+              <div class="wa-bubble out">
+                Haan bilkul! Main Snigdha ka Flow Twin hoon — uski professional conversations se trained. AI design pe baat karni hai? Let's go 🙌
+                <div class="wa-bubble-tag"><div class="wa-tag-dot"></div>Snigdha's Flow Twin · Wispr Flow</div>
+              </div>
+              <div class="wa-bubble in">AI products ke liye design approach kya hoti hai?</div>
+              <div class="wa-bubble out">
+                Traditional UX patterns AI mein break ho jaate hain. Mera focus hai user aur model ke beech ki relationship — sirf interface nahi. Kya specific challenge hai?
+                <div class="wa-bubble-tag"><div class="wa-tag-dot"></div>Snigdha's Flow Twin · Wispr Flow</div>
+              </div>
+              <div class="wa-time">10:22</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN 6: LIVE TRIAGE ── -->
+    <div class="screen" id="screen-6">
+      <div class="triage-wrap">
+        <div class="recog-header" style="margin-bottom:20px">
+          <div class="pg-title">Flow Twin — Live</div>
+          <div class="pg-sub">Your twin is handling inbound. You see only what needs you.</div>
+        </div>
+
+        <div class="triage-stats">
+          <div class="tstat">
+            <div class="n teal">48</div>
+            <div class="l">Handled this week</div>
+          </div>
+          <div class="tstat">
+            <div class="n orange">3</div>
+            <div class="l">Needs your attention</div>
+          </div>
+          <div class="tstat">
+            <div class="n">94%</div>
+            <div class="l">Confidence avg</div>
+          </div>
+        </div>
+
+        <div class="triage-two">
+          <div class="inbox-card">
+            <h4>Review queue · 3 flagged</h4>
+            <div class="inbox-item">
+              <div class="inbox-from">Arjun Mehta · via WhatsApp · 1h ago</div>
+              <div class="inbox-q">"What's your day rate for a 3-month engagement?"</div>
+              <div class="inbox-draft">"That depends on scope and nature of the work. Happy to have a quick call — that gives me a much better sense of fit." <span style="color:#1a7a6e;font-size:10px;font-style:normal;">→ draft</span></div>
+              <div class="inbox-btns">
+                <button class="ib approve" onclick="this.closest('.inbox-item').style.opacity='.4'">Approve</button>
+                <button class="ib">Edit</button>
+                <button class="ib" onclick="this.closest('.inbox-item').style.opacity='.4'">Dismiss</button>
+              </div>
+            </div>
+            <div class="inbox-item">
+              <div class="inbox-from">Unknown visitor · 2h ago</div>
+              <div class="inbox-q">"Can you introduce me to your VC contacts?"</div>
+              <div class="inbox-draft">"Introductions are something I do carefully. Share a bit more about what you're building and I can give a more thoughtful answer." <span style="color:#1a7a6e;font-size:10px;font-style:normal;">→ draft</span></div>
+              <div class="inbox-btns">
+                <button class="ib approve" onclick="this.closest('.inbox-item').style.opacity='.4'">Approve</button>
+                <button class="ib">Edit</button>
+                <button class="ib" onclick="this.closest('.inbox-item').style.opacity='.4'">Dismiss</button>
+              </div>
+            </div>
+            <div class="inbox-item">
+              <div class="inbox-from">Priya Sharma · 4h ago</div>
+              <div class="inbox-q">"Are you open to co-founding something new right now?"</div>
+              <div class="inbox-draft">"I think about it, but I'm very selective. Tell me more about what you're working on and why you're thinking of me." <span style="color:#1a7a6e;font-size:10px;font-style:normal;">→ draft</span></div>
+              <div class="inbox-btns">
+                <button class="ib approve" onclick="this.closest('.inbox-item').style.opacity='.4'">Approve</button>
+                <button class="ib">Edit</button>
+                <button class="ib" onclick="this.closest('.inbox-item').style.opacity='.4'">Dismiss</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="digest-card" style="margin-bottom:12px">
+              <h4>Weekly digest</h4>
+              <div class="digest-row"><div class="d-dot"></div><div class="d-text"><strong>Rohan K.</strong> asked about your design process — handled ✓</div><div class="d-time">2m</div></div>
+              <div class="digest-row"><div class="d-dot"></div><div class="d-text"><strong>Neha S.</strong> asked about speaking availability — handled ✓</div><div class="d-time">18m</div></div>
+              <div class="digest-row"><div class="d-dot orange"></div><div class="d-text">Twin link shared <strong>6×</strong> on LinkedIn today</div><div class="d-time">1h</div></div>
+              <div class="digest-row"><div class="d-dot"></div><div class="d-text"><strong>11 queries</strong> answered without escalation this week</div><div class="d-time">today</div></div>
+              <div class="digest-row"><div class="d-dot gray"></div><div class="d-text">Model confidence improved to <strong>94%</strong> after 3 corrections</div><div class="d-time">Sun</div></div>
+            </div>
+
+            <div class="pattern-card">
+              <h4>What people keep asking · train these</h4>
+              <div class="p-row">
+                <div class="p-topic">Consulting process</div>
+                <div class="p-bar-wrap"><div class="p-bar" style="width:88%"></div></div>
+                <div class="p-count">22 asks</div>
+              </div>
+              <div class="p-row">
+                <div class="p-topic">Availability</div>
+                <div class="p-bar-wrap"><div class="p-bar" style="width:64%"></div></div>
+                <div class="p-count">16 asks</div>
+              </div>
+              <div class="p-row">
+                <div class="p-topic">AI design approach</div>
+                <div class="p-bar-wrap"><div class="p-bar" style="width:48%"></div></div>
+                <div class="p-count">12 asks</div>
+              </div>
+              <div class="p-row">
+                <div class="p-topic">Pricing / rates</div>
+                <div class="p-bar-wrap"><div class="p-bar" style="width:36%"></div></div>
+                <div class="p-count">9 asks</div>
+                <div class="p-tip">Train?</div>
+              </div>
+              <div class="p-row">
+                <div class="p-topic">Portfolio</div>
+                <div class="p-bar-wrap"><div class="p-bar" style="width:20%"></div></div>
+                <div class="p-count">5 asks</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+let current = 0;
+const total = 7;
+
+function goTo(n) {
+  // update screens
+  document.querySelectorAll('.screen').forEach((s,i) => {
+    s.classList.toggle('active', i === n);
+  });
+
+  // update step bar
+  for (let i = 0; i < total; i++) {
+    const el = document.getElementById('s' + i);
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('active');
+    // update num
+    const num = el.querySelector('.step-num');
+    if (i < n) num.innerHTML = '✓';
+    else num.textContent = i + 1;
+  }
+
+  // sidebar active
+  document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('active'));
+  if (n === 0) {
+    document.querySelector('.sb-item').classList.add('active');
+  } else {
+    document.getElementById('twin-nav').classList.add('active');
+  }
+
+  current = n;
+}
+
+// consent toggle
+function toggleConsent() {
+  const tog = document.getElementById('consent-tog');
+  const btn = document.getElementById('consent-btn');
+  tog.classList.toggle('on');
+  if (tog.classList.contains('on')) {
+    btn.classList.remove('disabled');
+  } else {
+    btn.classList.add('disabled');
+  }
+}
+
+// recognition feedback
+function markYes(btn) {
+  btn.closest('.recog-actions').querySelectorAll('.ra-btn').forEach(b => {
+    b.classList.remove('yes','no');
+    b.style.opacity = '.4';
+  });
+  btn.style.opacity = '1';
+  btn.classList.add('yes');
+  btn.textContent = '✓ Sounds like me';
+}
+
+function markNo(btn) {
+  btn.closest('.recog-actions').querySelectorAll('.ra-btn').forEach(b => {
+    b.classList.remove('yes','no');
+    b.style.opacity = '.4';
+  });
+  btn.style.opacity = '1';
+  btn.classList.add('no');
+  btn.textContent = '✗ Not quite';
+}
+</script>
+</body>
+</html>
